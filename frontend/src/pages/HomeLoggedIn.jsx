@@ -3,12 +3,12 @@ import { useEffect, useState } from "react";
 import Navbar from "../components/layout/Navbar";
 import API from "../api/Api";
 
-const normalizeRecommended = (job) => ({
+const normalizeMatch = (value) => {\n  if (value == null) return null;\n  return value <= 1 ? Math.round(value * 100) : value;\n};\n\nconst normalizeRecommended = (job) => ({
   title: job.title,
   company: job.company_name || job.company || "Company",
   location: job.location || "Not specified",
-  match: job.matchScore ?? job.match ?? 80,
-  type: job.type || "Not specified",
+  match: normalizeMatch(job.matchScore ?? job.match ?? 80),
+  type: job.job_type || job.type || "Not specified",
   salary: job.salary || "Not specified",
   tags: Array.isArray(job.skills)
     ? job.skills
@@ -336,6 +336,7 @@ const S = {
   footer: { textAlign: "center", padding: "2rem", color: "#555577", fontSize: "0.8rem", borderTop: "1px solid rgba(108,92,231,0.15)", marginTop: "2rem" },
   emptyText: { color: "#8888aa", fontSize: "0.82rem" },
 };
+
 
 
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import API from "../api/Api";
+import API from "../../api/Api";
 import { useNavigate } from "react-router-dom";
 
 export default function Register() {
@@ -82,3 +82,4 @@ export default function Register() {
     </div>
   );
 }
+

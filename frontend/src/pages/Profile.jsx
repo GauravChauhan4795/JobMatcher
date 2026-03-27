@@ -141,10 +141,10 @@ export default function Profile({ navProps, user, onNavigate }) {
         {/* PROFILE STATS */}
         <div style={S.profileStats}>
           {[
-            { v: user?.matchScore ? user.matchScore + "%" : "—", l: "AI Match Score", c: "#a29bfe" },
+            { v: user?.matchScore ? user.matchScore + "%" : "--", l: "AI Match Score", c: "#a29bfe" },
             { v: user?.applications ?? applications.length, l: "Applications", c: "#00cec9" },
             { v: user?.savedJobs ?? 0, l: "Saved Jobs", c: "#fd79a8" },
-            { v: user?.profileStrength ? user.profileStrength + "%" : "—", l: "Profile Strength", c: "#fdcb6e" },
+            { v: user?.profileStrength ? user.profileStrength + "%" : "--", l: "Profile Strength", c: "#fdcb6e" },
           ].map((s, i) => (
             <div key={i} style={S.pStat}>
               <div style={{ ...S.pStatV, color: s.c }}>{s.v}</div>
@@ -262,7 +262,7 @@ export default function Profile({ navProps, user, onNavigate }) {
                 <div key={i} style={S.appRow}>
                   <div>
                     <div style={S.appTitle}>{app.title}</div>
-                    <div style={S.appCompany}>{app.company} · Applied {app.date}</div>
+                    <div style={S.appCompany}>{app.company} â€¢ Applied {app.date}</div>
                   </div>
                   <div style={{ ...S.statusBadge, background: app.statusColor + "22", color: app.statusColor, border: `1px solid ${app.statusColor}44` }}>
                     {app.status}

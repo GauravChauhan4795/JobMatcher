@@ -1,8 +1,8 @@
-import API from "../api/Api";
+import API from "../../api/Api";
 
 export default function JobCard({ job }) {
   const apply = async () => {
-    await API.post(`/applications/${job.id}`);
+    await API.post(`/applications/${job.id}/apply`);
     alert("Applied!");
   };
 
@@ -19,3 +19,5 @@ export default function JobCard({ job }) {
     </div>
   );
 }
+
+

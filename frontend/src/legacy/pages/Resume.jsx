@@ -1,5 +1,5 @@
 import { useState } from "react";
-import API from "../api/Api";
+import API from "../../api/Api";
 
 export default function Resume() {
   const [text, setText] = useState("");
@@ -21,3 +21,4 @@ export default function Resume() {
     </div>
   );
 }
+

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import API from "../api/Api";
+import API from "../../api/Api";
 
 export default function Dashboard() {
   const [apps, setApps] = useState([]);
@@ -20,3 +20,4 @@ export default function Dashboard() {
     </div>
   );
 }
+

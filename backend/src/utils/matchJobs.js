@@ -1,9 +1,17 @@
+const normalizeSkills = (skills) => {
+  if (!Array.isArray(skills)) return [];
+  return skills
+    .map((s) => String(s || "").toLowerCase().trim())
+    .filter((s) => s.length > 0);
+};
+
 exports.calculateMatchScore = (userSkills, jobSkills) => {
-  if (!jobSkills.length) return 0;
+  const user = normalizeSkills(userSkills);
+  const job = normalizeSkills(jobSkills);
+  if (job.length === 0) return 0;
 
-  const matches = jobSkills.filter(skill =>
-    userSkills.includes(skill)
-  );
+  const userSet = new Set(user);
+  const matches = job.filter((skill) => userSet.has(skill));
 
-  return matches.length / jobSkills.length;
+  return Math.round((matches.length / job.length) * 100);
 };

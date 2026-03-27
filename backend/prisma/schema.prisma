@@ -18,6 +18,12 @@ enum ApplicationStatus {
   REJECTED
 }
 
+enum RecruiterStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
   id            Int           @id @default(autoincrement())
   name          String
@@ -25,6 +31,7 @@ model User {
   password_hash String
   role          Role
   created_at    DateTime      @default(now())   
+  recruiterStatus RecruiterStatus?
 
   jobs          Job[]         @relation("RecruiterJobs")
   applications  Application[]
@@ -36,6 +43,10 @@ model Job {
   title         String
   description   String
   company_name  String
+  location      String?
+  job_type      String?
+  salary        String?
+  skills        String[]
   created_at    DateTime      @default(now())
 
   recruiter     User          @relation("RecruiterJobs", fields: [recruiter_id], references: [id])
@@ -60,12 +71,8 @@ model Application {
 
 model Resume {
   id          Int      @id @default(autoincrement())
-  raw_text    String?
-  file_url    String?
-  content     String
-  Skills      String[]
+  raw_text    String
   uploaded_at DateTime @default(now())
-
-  user        User     @relation(fields: [user_id], references: [id])
   user_id     Int
+  user        User     @relation(fields: [user_id], references: [id])
 }

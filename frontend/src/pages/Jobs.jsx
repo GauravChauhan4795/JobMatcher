@@ -12,14 +12,19 @@ const formatPosted = (date) => {
   return days === 1 ? "1d ago" : `${days}d ago`;
 };
 
+const normalizeMatch = (value) => {
+  if (value == null) return null;
+  return value <= 1 ? Math.round(value * 100) : value;
+};
+
 const normalizeJob = (job) => ({
   id: job.id,
   title: job.title,
   company: job.company_name || job.company || job.recruiter?.name || "Company",
   location: job.location || "Not specified",
-  type: job.type || "Not specified",
+  type: job.job_type || job.type || "Not specified",
   salary: job.salary || "Not specified",
-  match: job.matchScore ?? job.match ?? null,
+  match: normalizeMatch(job.matchScore ?? job.match),
   tags: Array.isArray(job.skills)
     ? job.skills
     : Array.isArray(job.tags)
@@ -106,7 +111,7 @@ export default function Jobs({ navProps, isLoggedIn, onNavigate }) {
         <div>
           <div style={S.label}>Opportunities</div>
           <h1 style={S.heading}>Browse Jobs</h1>
-          <p style={S.sub}>{jobs.length} live positions · AI-ranked by your skill match</p>
+          <p style={S.sub}>{jobs.length} live positions â€¢ AI-ranked by your skill match</p>
         </div>
         {!isLoggedIn && (
           <div style={S.loginBanner}>
@@ -151,7 +156,7 @@ export default function Jobs({ navProps, isLoggedIn, onNavigate }) {
               <div style={S.jobTop}>
                 <div style={S.jobInfo}>
                   <div style={S.jobTitle}>{job.title}</div>
-                  <div style={S.jobMeta}>{job.company} · {job.location}</div>
+                  <div style={S.jobMeta}>{job.company} â€¢ {job.location}</div>
                 </div>
                 <div style={{ textAlign: "right" }}>
                   {isLoggedIn && job.match != null && (
@@ -187,7 +192,7 @@ export default function Jobs({ navProps, isLoggedIn, onNavigate }) {
             <div style={S.detailHeader}>
               <div>
                 <h2 style={S.detailTitle}>{selected.title}</h2>
-                <div style={S.detailMeta}>{selected.company} · {selected.location} · {selected.type}</div>
+                <div style={S.detailMeta}>{selected.company} â€¢ {selected.location} â€¢ {selected.type}</div>
               </div>
               {isLoggedIn && selected.match != null && (
                 <div style={S.matchCircle}>
@@ -197,7 +202,7 @@ export default function Jobs({ navProps, isLoggedIn, onNavigate }) {
               )}
             </div>
 
-            <div style={S.detailSalary}>{selected.salary} · Posted {selected.posted}</div>
+            <div style={S.detailSalary}>{selected.salary} ï¿½ Posted {selected.posted}</div>
 
             <div style={S.detailSection}>
               <div style={S.detailSectionTitle}>About the Role</div>
@@ -302,6 +307,10 @@ const S = {
   btnOutline: { background: "transparent", color: "#e0e0f0", padding: "0.9rem 1.5rem", borderRadius: "10px", border: "1px solid rgba(108,92,231,0.3)", cursor: "pointer", fontWeight: 600, fontSize: "0.9rem", fontFamily: "'Space Grotesk',sans-serif" },
   btnSm: { background: "rgba(108,92,231,0.2)", border: "1px solid rgba(108,92,231,0.3)", color: "#a29bfe", padding: "0.4rem 0.9rem", borderRadius: "8px", cursor: "pointer", fontWeight: 600, fontSize: "0.8rem", fontFamily: "'Space Grotesk',sans-serif" },
 };
+
+
+
+
 
 
 

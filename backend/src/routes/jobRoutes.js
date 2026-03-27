@@ -14,3 +14,4 @@ router.get("/:id", getJobById);
 router.delete("/:id", auth, deleteJob);
 
 module.exports = router;
+

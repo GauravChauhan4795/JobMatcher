@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import API from "../api/Api";
+import API from "../../api/Api";
 import JobCard from "../components/JobCard";
 
 export default function Jobs() {
@@ -17,3 +17,4 @@ export default function Jobs() {
     </div>
   );
 }
+

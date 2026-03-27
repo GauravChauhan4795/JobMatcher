@@ -1,66 +1,80 @@
-// App.jsx - root router for SJ_Map
 import { useEffect, useState } from "react";
 import Home from "../pages/Home";
-import HomeLoggedIn from "../pages/HomeLoggedIn";
 import Login from "../pages/Login";
 import Jobs from "../pages/Jobs";
-import InstantAnalysis from "../pages/InstantAnalysis";
 import About from "../pages/About";
-import Profile from "../pages/Profile";
-import Dashboard from "../pages/Dashboard";
+
+import SeekerDashboard from "../pages/SeekerDashboard";
+import SeekerProfile from "../pages/SeekerProfile";
+import SeekerApplications from "../pages/SeekerApplications";
+import ResumeAnalysis from "../pages/ResumeAnalysis";
+
 import RecruiterDashboard from "../pages/RecruiterDashboard";
 import RecruiterProfile from "../pages/RecruiterProfile";
-import API from "../api/Api";
+import RecruiterJobForm from "../pages/RecruiterJobForm";
+import RecruiterApplicants from "../pages/RecruiterApplicants";
+
+import AdminDashboard from "../pages/AdminDashboard";
+import AdminRecruiters from "../pages/AdminRecruiters";
+import AdminJobs from "../pages/AdminJobs";
+import AdminUsers from "../pages/AdminUsers";
+
+const isValidRole = (role) => ["JOB_SEEKER", "RECRUITER", "ADMIN"].includes(role);
 
 const toDisplayRole = (role) => {
   if (role === "JOB_SEEKER") return "Job Seeker";
   if (role === "RECRUITER") return "Recruiter";
+  if (role === "ADMIN") return "Admin";
   return role || "";
 };
 
 const normalizeUser = (user) => {
   if (!user) return null;
-  const safe = { ...user };
-  if (safe.role) safe.role = toDisplayRole(safe.role);
-  return safe;
+  if (!isValidRole(user.role)) return null;
+  return { ...user, roleDisplay: toDisplayRole(user.role) };
 };
 
 const loadStoredUser = () => {
   const raw = localStorage.getItem("user");
   if (!raw) return null;
-  try {
-    return normalizeUser(JSON.parse(raw));
-  } catch {
-    return null;
-  }
+  try { return normalizeUser(JSON.parse(raw)); } catch { return null; }
 };
 
 export default function App() {
-  const [page, setPage] = useState(() => (localStorage.getItem("token") ? "Dashboard" : "Home"));
-  const [isLoggedIn, setIsLoggedIn] = useState(Boolean(localStorage.getItem("token")));
-  const [user, setUser] = useState(() => loadStoredUser());
-  const isRecruiter = user?.role?.toLowerCase() === "recruiter";
+  const initialUser = loadStoredUser();
+  const hasToken = Boolean(localStorage.getItem("token"));
+
+  const [user, setUser] = useState(() => initialUser);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => hasToken && Boolean(initialUser));
+  const [page, setPage] = useState(() => (hasToken && initialUser) ? "Dashboard" : "Home");
+  const [jobIdContext, setJobIdContext] = useState(null);
+
+  const role = user?.role;
 
   useEffect(() => {
-    if (isLoggedIn && user) {
-      localStorage.setItem("user", JSON.stringify(user));
+    if (isLoggedIn && user) localStorage.setItem("user", JSON.stringify(user));
+  }, [isLoggedIn, user]);
+
+  useEffect(() => {
+    if (!user && localStorage.getItem("token")) {
+      localStorage.removeItem("token");
+      setIsLoggedIn(false);
+      setPage("Home");
     }
-  }, [isLoggedIn, user]);
 
-  useEffect(() => {
-    if (!isLoggedIn || !user) return;
-    API.get("/applications/me")
-      .then((res) => {
-        const count = Array.isArray(res.data) ? res.data.length : 0;
-        setUser((prev) => (prev ? { ...prev, applications: count } : prev));
-      })
-      .catch(() => {});
-  }, [isLoggedIn, user]);
+    if (user && !isValidRole(user.role)) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      setUser(null);
+      setIsLoggedIn(false);
+      setPage("Home");
+    }
+  }, [user]);
 
   const handleLogin = (userData, token) => {
     if (token) localStorage.setItem("token", token);
-    if (userData?.email) localStorage.setItem("lastEmail", userData.email);
-    setUser(normalizeUser(userData));
+    const normalized = normalizeUser(userData);
+    setUser(normalized);
     setIsLoggedIn(true);
     setPage("Dashboard");
   };
@@ -73,9 +87,33 @@ export default function App() {
     setPage("Home");
   };
 
-  const navigate = (target) => setPage(target);
+  const navigate = (target, ctx) => {
+    if (ctx?.jobId) setJobIdContext(ctx.jobId);
+    setPage(target);
+  };
 
   const navProps = { activePage: page, onNavigate: navigate, isLoggedIn, user, onLogout: handleLogout };
+
+  if (isLoggedIn && role === "JOB_SEEKER") {
+    if (page === "Dashboard") return <SeekerDashboard navProps={navProps} user={user} onNavigate={navigate} />;
+    if (page === "Applications") return <SeekerApplications navProps={navProps} user={user} onNavigate={navigate} />;
+    if (page === "Profile") return <SeekerProfile navProps={navProps} user={user} onNavigate={navigate} onUserUpdate={u => setUser(p => ({ ...p, ...u }))} />;
+    if (page === "Resume Analysis") return <ResumeAnalysis navProps={navProps} isLoggedIn={isLoggedIn} onNavigate={navigate} />;
+  }
+
+  if (isLoggedIn && role === "RECRUITER") {
+    if (page === "Dashboard") return <RecruiterDashboard navProps={navProps} user={user} onNavigate={navigate} />;
+    if (page === "Post Job") return <RecruiterJobForm navProps={navProps} user={user} onNavigate={navigate} />;
+    if (page === "Profile") return <RecruiterProfile navProps={navProps} user={user} onNavigate={navigate} />;
+    if (page === "Applicants") return <RecruiterApplicants navProps={navProps} user={user} onNavigate={navigate} jobId={jobIdContext} />;
+  }
+
+  if (isLoggedIn && role === "ADMIN") {
+    if (page === "Dashboard") return <AdminDashboard navProps={navProps} user={user} onNavigate={navigate} />;
+    if (page === "Recruiters") return <AdminRecruiters navProps={navProps} user={user} onNavigate={navigate} />;
+    if (page === "Jobs") return <AdminJobs navProps={navProps} user={user} onNavigate={navigate} />;
+    if (page === "Users") return <AdminUsers navProps={navProps} user={user} onNavigate={navigate} />;
+  }
 
   return (
     <>
@@ -88,68 +126,21 @@ export default function App() {
         @keyframes fadeIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
         @keyframes slideUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
         @keyframes spin { to{transform:rotate(360deg)} }
-        @keyframes shimmer { 0%{opacity:0.4} 50%{opacity:1} 100%{opacity:0.4} }
         button { font-family:'Space Grotesk',sans-serif; }
         ::-webkit-scrollbar { width:5px; }
         ::-webkit-scrollbar-track { background:#0a0a14; }
         ::-webkit-scrollbar-thumb { background:#3a3a5c; border-radius:99px; }
       `}</style>
 
-      {page === "Home" && !isLoggedIn && <Home navProps={navProps} />}
-      {page === "Home" && isLoggedIn && user && (
-        <HomeLoggedIn navProps={navProps} user={user} onNavigate={navigate} />
-      )}
-      {page === "Home" && isLoggedIn && !user && (
-        <Home navProps={navProps} />
-      )}
-      {page === "Login" && (
-        <Login navProps={navProps} onLogin={handleLogin} onNavigate={navigate} />
-      )}
-      {page === "Jobs" && (
-        <Jobs navProps={navProps} isLoggedIn={isLoggedIn} onNavigate={navigate} />
-      )}
-      {page === "Resume Analysis" && (
-        <InstantAnalysis
-          navProps={navProps}
-          isLoggedIn={isLoggedIn}
-          onNavigate={navigate}
-          onUserUpdate={(partial) =>
-            setUser((prev) => (prev ? { ...prev, ...partial } : prev))
-          }
-        />
-      )}
+      {page === "Home" && <Home navProps={navProps} onNavigate={navigate} />}
+      {page === "Login" && <Login navProps={navProps} onLogin={handleLogin} onNavigate={navigate} />}
+      {page === "Jobs" && <Jobs navProps={navProps} isLoggedIn={isLoggedIn} onNavigate={navigate} user={user} />}
       {page === "About" && <About navProps={navProps} onNavigate={navigate} />}
-
-      {page === "Dashboard" && !isLoggedIn && (
-        <Login navProps={navProps} onLogin={handleLogin} onNavigate={navigate} />
-      )}
-      {page === "Dashboard" && isLoggedIn && (
-        isRecruiter ? (
-          <RecruiterDashboard navProps={navProps} user={user} onNavigate={navigate} />
-        ) : (
-          <Dashboard navProps={navProps} user={user} onNavigate={navigate} />
-        )
-      )}
-
-      {page === "Profile" && !isLoggedIn && (
-        <Login navProps={navProps} onLogin={handleLogin} onNavigate={navigate} />
-      )}
-      {page === "Profile" && isLoggedIn && user && (
-        isRecruiter ? (
-          <RecruiterProfile navProps={navProps} user={user} onNavigate={navigate} />
-        ) : (
-          <Profile navProps={navProps} user={user} onNavigate={navigate} />
-        )
+      {page === "Dashboard" && !isLoggedIn && <Login navProps={navProps} onLogin={handleLogin} onNavigate={navigate} />}
+      {page === "Resume Analysis" && !isLoggedIn && <Login navProps={navProps} onLogin={handleLogin} onNavigate={navigate} />}
+      {!isLoggedIn && page !== "Home" && page !== "Login" && page !== "Jobs" && page !== "About" && (
+        <Home navProps={navProps} onNavigate={navigate} />
       )}
     </>
   );
 }
-
-
-
-
-
-
-
-
-

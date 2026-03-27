@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: 12gaurav3
       POSTGRES_DB: jobmatcher
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql 
 
@@ -25,7 +25,7 @@ services:
       JWT_SECRET: your_secret_key
     volumes:
       - ./backend:/app
-    command: sh -c "npx prisma migrate deploy && npm start"
+    command: sh -c "npx prisma db push && npm start"
 
   frontend:
     build: ./frontend

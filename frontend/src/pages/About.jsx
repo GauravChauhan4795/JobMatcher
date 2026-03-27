@@ -1,4 +1,3 @@
-// AboutPage.jsx
 import Navbar from "../components/layout/Navbar";
 
 const TEAM = [
@@ -14,14 +13,6 @@ const VALUES = [
   { icon: "GROW", title: "Growth-First", desc: "We do not just match you to jobs today - we help you build the skills for where you want to be tomorrow." },
   { icon: "FAST", title: "Speed and Efficiency", desc: "Hiring is slow. We are obsessed with cutting every unnecessary step for both candidates and recruiters." },
 ];
-
-// const MILESTONES = [
-//   { year: "2022", event: "SJ_Map founded in a Bangalore co-working space with a 3-person team." },
-//   { year: "2023", event: "Launched beta to 5,000 users. Seed funding of INR 8Cr raised." },
-//   { year: "2024", event: "50,000 candidates. 500 hiring companies. Series A of INR 40Cr." },
-//   { year: "2025", event: "Launched Resume Analysis, Skill Gap engine, and Recruiter Dashboard." },
-//   { year: "2026", event: "100K+ active users. Expanding to Southeast Asia." },
-// ];
 
 export default function About({ navProps, onNavigate }) {
   return (
