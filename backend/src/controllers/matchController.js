@@ -9,26 +9,29 @@ exports.getMatchedJobs = async (req, res) => {
     });
 
     if (!resume) {
-      return res.status(400).json({ error: "No resume found" });
+      return res.status(400).json({ error: "No resume found. Please upload a resume first." });
     }
 
-    const userSkills = Array.isArray(resume.skills) ? resume.skills : [];
+    const userSkills = resume.skills || [];
 
     const jobs = await prisma.job.findMany({
-      orderBy: { created_at: "desc" },
+      include: {
+        recruiter: {
+          select: { id: true, name: true, email: true },
+        },
+      },
     });
 
-    const matchedJobs = jobs.map((job) => {
-      const score = calculateMatchScore(userSkills, job.skills || []);
-      return { ...job, matchScore: score };
-    });
-
-    matchedJobs.sort((a, b) => b.matchScore - a.matchScore);
+    const matchedJobs = jobs
+      .map((job) => ({
+        ...job,
+        matchScore: calculateMatchScore(userSkills, job.skills || []),
+      }))
+      .sort((a, b) => b.matchScore - a.matchScore);
 
     res.json(matchedJobs);
   } catch (err) {
-    console.error(err);
+    console.error("getMatchedJobs error:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 };
-

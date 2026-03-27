@@ -56,9 +56,9 @@ model Job {
 }
 
 model Application {
-  id          Int      @id @default(autoincrement())
+  id          Int               @id @default(autoincrement())
   status      ApplicationStatus
-  created_at  DateTime @default(now())
+  created_at  DateTime          @default(now())
 
   user        User     @relation(fields: [user_id], references: [id])
   user_id     Int
@@ -71,8 +71,12 @@ model Application {
 
 model Resume {
   id          Int      @id @default(autoincrement())
-  raw_text    String
+  raw_text    String?
+  file_url    String?
+  content     String
+  skills      String[]
   uploaded_at DateTime @default(now())
-  user_id     Int
+
   user        User     @relation(fields: [user_id], references: [id])
+  user_id     Int
 }
