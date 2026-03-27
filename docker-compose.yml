@@ -1,0 +1,44 @@
+services:
+  db:
+    image: postgres:18
+    container_name: jobmatcher_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12gaurav3
+      POSTGRES_DB: jobmatcher
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql 
+
+  backend:
+    build: ./backend
+    container_name: jobmatcher_backend
+    restart: always
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://postgres:12gaurav3@db:5432/jobmatcher
+      JWT_SECRET: your_secret_key
+    volumes:
+      - ./backend:/app
+    command: sh -c "npx prisma migrate deploy && npm start"
+
+  frontend:
+    build: ./frontend
+    container_name: jobmatcher_frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules 
+    stdin_open: true
+    tty: true
+
+volumes:
+  pgdata:
