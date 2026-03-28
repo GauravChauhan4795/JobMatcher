@@ -10,6 +10,13 @@ export default defineConfig({
     hmr: {
       overlay: true,
     },
+    proxy: {
+      "/api": {
+        target: "http://backend:5000",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ""),
+      },
+    },
     allowedHosts: [
       'unprivately-checky-nery.ngrok-free.dev',
       'localhost', 
