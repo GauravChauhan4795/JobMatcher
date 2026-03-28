@@ -9,17 +9,25 @@ exports.getMatchedJobs = async (req, res) => {
     });
 
     if (!resume) {
-      return res.status(400).json({ error: "No resume found. Please upload a resume first." });
+      const allJobs = await prisma.job.findMany({
+        include: {
+          recruiter: { select: { id: true, name: true, email: true } },
+          _count: { select: { applications: true } },
+        },
+        orderBy: { created_at: "desc" },
+      });
+
+      return res.json(allJobs.map((job) => ({ ...job, matchScore: 0 })));
     }
 
     const userSkills = resume.skills || [];
 
     const jobs = await prisma.job.findMany({
       include: {
-        recruiter: {
-          select: { id: true, name: true, email: true },
-        },
+        recruiter: { select: { id: true, name: true, email: true } },
+        _count: { select: { applications: true } },
       },
+      orderBy: { created_at: "desc" },
     });
 
     const matchedJobs = jobs
@@ -32,6 +40,6 @@ exports.getMatchedJobs = async (req, res) => {
     res.json(matchedJobs);
   } catch (err) {
     console.error("getMatchedJobs error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "Failed to fetch matched jobs." });
   }
 };

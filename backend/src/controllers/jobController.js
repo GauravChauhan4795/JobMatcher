@@ -34,7 +34,7 @@ exports.createJob = async (req, res) => {
 
     const skillsArray = Array.isArray(skills)
       ? skills.map((s) => String(s).trim()).filter(Boolean)
-      : typeof skills === "string"
+      : typeof skills === "string" && skills.trim()
       ? skills.split(",").map((s) => s.trim()).filter(Boolean)
       : [];
 
@@ -54,7 +54,7 @@ exports.createJob = async (req, res) => {
     res.status(201).json(job);
   } catch (err) {
     console.error("createJob error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "Failed to create job. Please try again." });
   }
 };
 
@@ -72,10 +72,10 @@ exports.getJobs = async (req, res) => {
       orderBy: { created_at: "desc" },
     });
 
-    res.json(jobs);
+    res.json(jobs || []);
   } catch (err) {
     console.error("getJobs error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "Failed to fetch jobs. Please try again." });
   }
 };
 
@@ -106,7 +106,7 @@ exports.getJobById = async (req, res) => {
     res.json(job);
   } catch (err) {
     console.error("getJobById error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "Failed to fetch job." });
   }
 };
 
@@ -136,7 +136,7 @@ exports.updateJob = async (req, res) => {
 
     const skillsArray = Array.isArray(skills)
       ? skills.map((s) => String(s).trim()).filter(Boolean)
-      : typeof skills === "string"
+      : typeof skills === "string" && skills.trim()
       ? skills.split(",").map((s) => s.trim()).filter(Boolean)
       : undefined;
 
@@ -156,7 +156,7 @@ exports.updateJob = async (req, res) => {
     res.json(updated);
   } catch (err) {
     console.error("updateJob error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "Failed to update job." });
   }
 };
 
@@ -178,12 +178,14 @@ exports.deleteJob = async (req, res) => {
       return res.status(403).json({ error: "Not authorized" });
     }
 
-    await prisma.application.deleteMany({ where: { job_id: jobId } });
-    await prisma.job.delete({ where: { id: jobId } });
+    await prisma.$transaction([
+      prisma.application.deleteMany({ where: { job_id: jobId } }),
+      prisma.job.delete({ where: { id: jobId } }),
+    ]);
 
     res.json({ message: "Job deleted successfully" });
   } catch (err) {
     console.error("deleteJob error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "Failed to delete job." });
   }
 };

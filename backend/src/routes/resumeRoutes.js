@@ -7,26 +7,40 @@ const { uploadResume, analyzeResume } = require("../controllers/resumeController
 const optionalAuth = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) return next();
-  const token = authHeader.split(" ")[1];
+  const parts = authHeader.split(" ");
+  if (parts.length !== 2 || parts[0].toLowerCase() !== "bearer") return next();
+  const token = parts[1];
   try {
     const jwt = require("jsonwebtoken");
-    req.user = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = jwt.verify(token, process.env.JWT_SECRET || "dev_secret");
   } catch {
-    // invalid token — continue without user
+    // invalid/expired token — continue without user
   }
   next();
 };
 
-const handleUpload = (field) => async (req, res, next) => {
-  try {
-    await upload.single(field)(req, res);
-    next();
-  } catch (err) {
-    return res.status(400).json({ error: err.message || "File upload failed" });
-  }
-};
+router.post(
+  "/upload",
+  auth,
+  upload.single("resume"),
+  uploadResume
+);
 
-router.post("/upload", auth, handleUpload("resume"), uploadResume);
-router.post("/upload-analyze", optionalAuth, handleUpload("resume"), analyzeResume);
+router.post(
+  "/upload-analyze",
+  optionalAuth,
+  upload.single("resume"),
+  analyzeResume
+);
+
+router.use((err, req, res, next) => {
+  if (err.code === "LIMIT_FILE_SIZE") {
+    return res.status(413).json({ error: "File too large. Maximum size is 5MB." });
+  }
+  if (err.message && err.message.includes("Only PDF")) {
+    return res.status(415).json({ error: err.message });
+  }
+  next(err);
+});
 
 module.exports = router;

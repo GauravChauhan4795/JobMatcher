@@ -42,21 +42,31 @@ const extractSkillsByKeywords = (text) => {
 
 const buildSkillPrompt = (text) => {
   const trimmed = String(text || "").slice(0, 10000);
-  return `Extract a concise, deduplicated list of hard skills from the resume.\nReturn ONLY valid JSON as an array of strings.\n\nResume:\n${trimmed}`;
+  return `Extract a concise, deduplicated list of hard technical skills from the resume below.
+Include programming languages, frameworks, tools, platforms, and methodologies.
+Return ONLY valid JSON as an array of strings. No markdown, no explanation.
+
+Resume:
+${trimmed}`;
 };
 
 const extractSkillsWithLLM = async (text) => {
-  const prompt = buildSkillPrompt(text);
-  const response = await generateContent(prompt, { maxOutputTokens: 300 });
-  if (!response) return extractSkillsByKeywords(text);
-  const parsed = extractJsonFromText(response);
-  if (Array.isArray(parsed)) {
-    return normalizeSkillList(parsed);
+  try {
+    const prompt = buildSkillPrompt(text);
+    const response = await generateContent(prompt, { maxOutputTokens: 400, temperature: 0.1 });
+    if (response) {
+      const parsed = extractJsonFromText(response);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return normalizeSkillList(parsed);
+      }
+    }
+  } catch (err) {
+    console.warn("LLM skill extraction failed, falling back to keywords:", err?.message);
   }
   return extractSkillsByKeywords(text);
 };
 
-const extractSkills = (text) => extractSkillsByKeywords(text);
+const extractSkills = extractSkillsWithLLM;
 
 module.exports = {
   extractSkills,
