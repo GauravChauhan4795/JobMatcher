@@ -8,14 +8,21 @@ exports.getStats = async (req, res) => {
     const prisma = getPrisma();
 
     if (prisma) {
-      const [totalUsers, totalJobs, totalApps, pendingRecruiters, pendingJobs, activeJobs] = await Promise.all([
+      const [totalUsers, totalJobs, totalApps, pendingRecruiters, activeJobs] = await Promise.all([
         prisma.user.count(),
         prisma.job.count(),
         prisma.application.count(),
         prisma.user.count({ where: { role: "RECRUITER", recruiterStatus: "PENDING" } }),
-        await prisma.job.count(),
+        prisma.job.count(),
       ]);
-      return res.json({ totalUsers, totalJobs, totalApps, pendingRecruiters, pendingJobs, activeJobs });
+      return res.json({
+        totalUsers,
+        totalJobs,
+        totalApps,
+        pendingRecruiters,
+        pendingJobs: totalJobs,
+        activeJobs,
+      });
     }
   } catch (err) {
     console.error("GET STATS ERROR:", err);
@@ -49,10 +56,14 @@ exports.updateRecruiterStatus = async (req, res) => {
     const { status } = req.body;
 
     if (isNaN(userId)) return res.status(400).json({ error: "Invalid user id" });
-    if (!["PENDING", "APPROVED", "REJECTED"].includes(status)) return res.status(400).json({ error: "Invalid status" });
+    if (!["PENDING", "APPROVED", "REJECTED"].includes(status))
+      return res.status(400).json({ error: "Invalid status" });
 
     if (prisma) {
-      const user = await prisma.user.update({ where: { id: userId }, data: { recruiterStatus: status } });
+      const user = await prisma.user.update({
+        where: { id: userId },
+        data: { recruiterStatus: status },
+      });
       return res.json(user);
     }
   } catch (err) {
@@ -67,7 +78,10 @@ exports.getAllJobs = async (req, res) => {
 
     if (prisma) {
       const jobs = await prisma.job.findMany({
-        include: { recruiter: { select: { name: true, email: true } }, _count: { select: { applications: true } } },
+        include: {
+          recruiter: { select: { name: true, email: true } },
+          _count: { select: { applications: true } },
+        },
         orderBy: { created_at: "desc" },
       });
       return res.json(jobs);
@@ -84,7 +98,14 @@ exports.getAllUsers = async (req, res) => {
 
     if (prisma) {
       const users = await prisma.user.findMany({
-        select: { id: true, name: true, email: true, role: true, recruiterStatus: true, created_at: true },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          recruiterStatus: true,
+          created_at: true,
+        },
         orderBy: { created_at: "desc" },
       });
       return res.json(users);

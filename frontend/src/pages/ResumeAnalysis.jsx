@@ -38,7 +38,7 @@ export default function ResumeAnalysis({ navProps, isLoggedIn, onNavigate }) {
       formData.append("resume", file);
       formData.append("jobDescription", jd);
 
-      const res = await API.post("/resume/analyze", formData, {
+      const res = await API.post("/resume/upload-analyze", formData, {
         headers: { "Content-Type": "multipart/form-data" }
       });
 

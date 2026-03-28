@@ -7,6 +7,7 @@ const jobRoutes = require("./routes/jobRoutes");
 const applicationRoutes = require("./routes/applicationRoutes");
 const resumeRoutes = require("./routes/resumeRoutes");
 const matchRoutes = require("./routes/matchRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use("/jobs", jobRoutes);
 app.use("/applications", applicationRoutes);
 app.use("/resume", resumeRoutes);
 app.use("/match", matchRoutes);
+app.use("/admin", adminRoutes);
 
 app.get("/", async (req, res) => {
   try {
