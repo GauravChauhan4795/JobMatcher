@@ -34,6 +34,22 @@ export default function RecruiterApplicants({ navProps, jobId, onNavigate }) {
     }
   };
 
+  const downloadResume = async (resumeId) => {
+    try {
+      const res = await API.get(`/resume/${resumeId}/download`, { responseType: "blob" });
+      const blobUrl = window.URL.createObjectURL(res.data);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `resume-${resumeId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      setError(getApiError(err));
+    }
+  };
+
   return (
     <div style={S.root}>
       <Navbar {...navProps} activePage="Applicants" />
@@ -55,29 +71,40 @@ export default function RecruiterApplicants({ navProps, jobId, onNavigate }) {
           <div style={S.empty}>No applicants yet.</div>
         )}
 
-        {jobId && apps.map((app) => (
-          <div key={app.id} style={S.card}>
-            <div style={S.cardLeft}>
-              <div style={S.name}>{app.user?.name || "Applicant"}</div>
-              <div style={S.meta}>{app.user?.email || ""}</div>
-              <div style={S.meta}>Applied {new Date(app.created_at).toLocaleDateString()}</div>
-            </div>
-            <div style={S.cardRight}>
-              <div style={S.status}>Status: {app.status}</div>
-              <div style={S.actions}>
-                {STATUS_OPTIONS.map((s) => (
-                  <button
-                    key={s}
-                    style={{ ...S.btnSm, ...(app.status === s ? S.btnActive : {}) }}
-                    onClick={() => updateStatus(app.id, s)}
-                  >
-                    {s}
-                  </button>
-                ))}
+        {jobId && apps.map((app) => {
+          const resume = app.user?.resumes?.[0];
+          return (
+            <div key={app.id} style={S.card}>
+              <div style={S.cardLeft}>
+                <div style={S.name}>{app.user?.name || "Applicant"}</div>
+                <div style={S.meta}>{app.user?.email || ""}</div>
+                <div style={S.meta}>Applied {new Date(app.created_at).toLocaleDateString()}</div>
+                <div style={S.match}>Match: {app.matchScore ?? 0}%</div>
+              </div>
+              <div style={S.cardRight}>
+                <div style={S.status}>Status: {app.status}</div>
+                <div style={S.actions}>
+                  {STATUS_OPTIONS.map((s) => (
+                    <button
+                      key={s}
+                      style={{ ...S.btnSm, ...(app.status === s ? S.btnActive : {}) }}
+                      onClick={() => updateStatus(app.id, s)}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+                <div style={S.resumeRow}>
+                  {resume?.id ? (
+                    <button style={S.btnResume} onClick={() => downloadResume(resume.id)}>View Resume</button>
+                  ) : (
+                    <span style={S.resumeEmpty}>No resume uploaded</span>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -95,9 +122,13 @@ const S = {
   cardLeft: { minWidth: "220px" },
   name: { fontWeight: 700, fontSize: "1rem" },
   meta: { fontSize: "0.8rem", color: "#8888aa", marginTop: "0.2rem" },
+  match: { fontSize: "0.85rem", color: "#00cec9", fontWeight: 700, marginTop: "0.5rem" },
   cardRight: { display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.6rem" },
   status: { fontSize: "0.85rem", color: "#a29bfe", fontWeight: 600 },
-  actions: { display: "flex", gap: "0.4rem", flexWrap: "wrap" },
+  actions: { display: "flex", gap: "0.4rem", flexWrap: "wrap", justifyContent: "flex-end" },
   btnSm: { background: "rgba(108,92,231,0.15)", border: "1px solid rgba(108,92,231,0.3)", color: "#a29bfe", padding: "0.35rem 0.6rem", borderRadius: "8px", cursor: "pointer", fontWeight: 600, fontSize: "0.7rem" },
   btnActive: { background: "rgba(0,206,201,0.2)", borderColor: "rgba(0,206,201,0.4)", color: "#00cec9" },
+  resumeRow: { display: "flex", alignItems: "center", justifyContent: "flex-end" },
+  btnResume: { background: "linear-gradient(135deg,#6c5ce7,#7c6ff7)", color: "#fff", padding: "0.45rem 0.9rem", borderRadius: "9px", border: "none", cursor: "pointer", fontWeight: 700, fontSize: "0.75rem" },
+  resumeEmpty: { fontSize: "0.75rem", color: "#8888aa" },
 };

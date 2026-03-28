@@ -14,7 +14,15 @@ const VALUES = [
   { icon: "FAST", title: "Speed and Efficiency", desc: "Hiring is slow. We are obsessed with cutting every unnecessary step for both candidates and recruiters." },
 ];
 
-export default function About({ navProps, onNavigate }) {
+export default function About({ navProps, onNavigate, isLoggedIn }) {
+  const handleGetStarted = () => {
+    if (isLoggedIn) {
+      onNavigate("Dashboard");
+    } else {
+      onNavigate("Login");
+    }
+  };
+
   return (
     <div style={S.root}>
       <div style={S.mesh} />
@@ -32,7 +40,7 @@ export default function About({ navProps, onNavigate }) {
           We built the platform we wished existed.
         </p>
         <div style={S.heroBtns}>
-          <button style={S.btnPrimary} onClick={() => onNavigate("Login")}>Join SJ_Map</button>
+          <button style={S.btnPrimary} onClick={handleGetStarted}>Join SJ_Map</button>
           <button style={S.btnOutline} onClick={() => onNavigate("Jobs")}>Browse Jobs</button>
         </div>
       </section>
@@ -91,7 +99,7 @@ export default function About({ navProps, onNavigate }) {
       <section style={S.cta}>
         <h2 style={S.ctaTitle}>Ready to experience smarter hiring?</h2>
         <p style={S.ctaSub}>Join other professionals using SJ_Map to find their perfect match.</p>
-        <button style={S.btnPrimary} onClick={() => onNavigate("Login")}>
+        <button style={S.btnPrimary} onClick={handleGetStarted}>
           Get Started Free
         </button>
       </section>

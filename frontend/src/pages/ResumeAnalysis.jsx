@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Navbar from "../components/layout/Navbar";
-import API from "../api/Api";
+import API, { getApiError } from "../api/Api";
 
 const matchColor = (m) => m >= 90 ? "#00cec9" : m >= 75 ? "#a29bfe" : "#fdcb6e";
 const levelColor = { Expert: "#00cec9", Advanced: "#a29bfe", Intermediate: "#fdcb6e", Beginner: "#fd79a8" };
@@ -13,6 +13,7 @@ export default function ResumeAnalysis({ navProps, isLoggedIn, onNavigate }) {
   const [jd, setJd] = useState("");
   const [progress, setProgress] = useState(0);
   const [analysisResult, setAnalysisResult] = useState(null);
+  const [error, setError] = useState("");
 
   const handleFile = (e) => {
     const f = e.target.files?.[0] || e.dataTransfer?.files?.[0];
@@ -29,6 +30,7 @@ export default function ResumeAnalysis({ navProps, isLoggedIn, onNavigate }) {
       return;
     }
     try {
+      setError("");
       setStage("analysing");
       setProgress(30);
 
@@ -47,11 +49,14 @@ export default function ResumeAnalysis({ navProps, isLoggedIn, onNavigate }) {
       }
 
       setAnalysisResult(res.data);
+      setError("");
       setStage("result");
 
     } catch (err) {
       console.error("Analysis failed:", err);
-      setStage("upload");
+      setError(getApiError(err));
+      setProgress(0);
+      setStage("jd");
     }
   };
 
@@ -133,6 +138,7 @@ export default function ResumeAnalysis({ navProps, isLoggedIn, onNavigate }) {
               <button style={S.btnPrimary} onClick={startAnalysis}>Analyse Now ⚡</button>
               <button style={S.btnOutline} onClick={startAnalysis}>Skip & Analyse Generally</button>
             </div>
+            {error && <div style={S.error}>{error}</div>}
           </div>
         )}
 
@@ -263,6 +269,7 @@ const S = {
   sectionT: { fontWeight: 700, fontSize: "0.82rem", letterSpacing: "1.5px", textTransform: "uppercase", color: "#a29bfe", marginBottom: "1.2rem" },
   btnPrimary: { background: "linear-gradient(135deg,#6c5ce7,#7c6ff7)", color: "#fff", padding: "0.9rem 2rem", borderRadius: "10px", border: "none", cursor: "pointer", fontWeight: 700, fontSize: "0.95rem", fontFamily: "'Space Grotesk',sans-serif", boxShadow: "0 4px 20px rgba(108,92,231,0.35)" },
   btnOutline: { background: "transparent", color: "#e0e0f0", padding: "0.9rem 1.5rem", borderRadius: "10px", border: "1px solid rgba(108,92,231,0.3)", cursor: "pointer", fontWeight: 600, fontSize: "0.9rem", fontFamily: "'Space Grotesk',sans-serif" },
+  error: { marginTop: "1rem", background: "rgba(253,121,168,0.12)", border: "1px solid rgba(253,121,168,0.35)", color: "#fd79a8", padding: "0.6rem 0.9rem", borderRadius: "8px", fontSize: "0.85rem" },
 };
 
 

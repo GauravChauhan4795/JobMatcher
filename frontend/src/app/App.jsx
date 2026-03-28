@@ -135,7 +135,7 @@ export default function App() {
       {page === "Home" && <Home navProps={navProps} onNavigate={navigate} />}
       {page === "Login" && <Login navProps={navProps} onLogin={handleLogin} onNavigate={navigate} />}
       {page === "Jobs" && <Jobs navProps={navProps} isLoggedIn={isLoggedIn} onNavigate={navigate} user={user} />}
-      {page === "About" && <About navProps={navProps} onNavigate={navigate} />}
+      {page === "About" && <About navProps={navProps} onNavigate={navigate} isLoggedIn={isLoggedIn} user={user} />}
       {page === "Dashboard" && !isLoggedIn && <Login navProps={navProps} onLogin={handleLogin} onNavigate={navigate} />}
       {page === "Resume Analysis" && !isLoggedIn && <Login navProps={navProps} onLogin={handleLogin} onNavigate={navigate} />}
       {!isLoggedIn && page !== "Home" && page !== "Login" && page !== "Jobs" && page !== "About" && (
@@ -144,3 +144,5 @@ export default function App() {
     </>
   );
 }
+
+

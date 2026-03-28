@@ -1,3 +1,5 @@
+const { generateContent, extractJsonFromText } = require("./geminiClient");
+
 const SKILLS = [
   // Languages
   "javascript", "typescript", "python", "java", "c++", "c#", "go", "rust", "php", "ruby", "swift", "kotlin",
@@ -15,12 +17,50 @@ const SKILLS = [
   "tensorflow", "pytorch", "scikit-learn", "pandas", "numpy", "mlops",
 ];
 
-exports.extractSkills = (text) => {
-  const lowerText = text.toLowerCase();
+const normalizeSkillList = (skills) => {
+  const seen = new Set();
+  const result = [];
+  (skills || []).forEach((s) => {
+    const name = String(s || "").trim();
+    if (!name) return;
+    const key = name.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    result.push(name);
+  });
+  return result;
+};
+
+const extractSkillsByKeywords = (text) => {
+  const lowerText = String(text || "").toLowerCase();
   return SKILLS.filter((skill) => {
-    // Use word boundary matching to avoid partial matches
     const escaped = skill.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const regex = new RegExp(`(?<![a-z])${escaped}(?![a-z])`, "i");
     return regex.test(lowerText);
   });
+};
+
+const buildSkillPrompt = (text) => {
+  const trimmed = String(text || "").slice(0, 10000);
+  return `Extract a concise, deduplicated list of hard skills from the resume.\nReturn ONLY valid JSON as an array of strings.\n\nResume:\n${trimmed}`;
+};
+
+const extractSkillsWithLLM = async (text) => {
+  const prompt = buildSkillPrompt(text);
+  const response = await generateContent(prompt, { maxOutputTokens: 300 });
+  if (!response) return extractSkillsByKeywords(text);
+  const parsed = extractJsonFromText(response);
+  if (Array.isArray(parsed)) {
+    return normalizeSkillList(parsed);
+  }
+  return extractSkillsByKeywords(text);
+};
+
+const extractSkills = (text) => extractSkillsByKeywords(text);
+
+module.exports = {
+  extractSkills,
+  extractSkillsByKeywords,
+  extractSkillsWithLLM,
+  normalizeSkillList,
 };

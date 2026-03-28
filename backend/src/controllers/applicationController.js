@@ -1,3 +1,5 @@
+const { calculateMatchScore } = require("../utils/matchJobs");
+
 const getPrisma = () => {
   try { return require("../db/prisma"); } catch { return null; }
 };
@@ -47,12 +49,36 @@ exports.getApplicantsForJob = async (req, res) => {
       const job = await prisma.job.findUnique({ where: { id: jobId } });
       if (!job) return res.status(404).json({ error: "Job not found" });
       if (job.recruiter_id !== req.user.id && req.user.role !== "ADMIN") return res.status(403).json({ error: "Not authorized" });
+
       const applicants = await prisma.application.findMany({
         where: { job_id: jobId },
-        include: { user: { select: { id: true, name: true, email: true } }, job: true },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              resumes: {
+                orderBy: { uploaded_at: "desc" },
+                take: 1,
+                select: { id: true, file_url: true, uploaded_at: true, skills: true },
+              },
+            },
+          },
+          job: true,
+        },
         orderBy: { created_at: "desc" },
       });
-      return res.json(applicants);
+
+      const enriched = applicants.map((app) => {
+        const resumeSkills = app.user?.resumes?.[0]?.skills || [];
+        const matchScore = calculateMatchScore(resumeSkills, app.job?.skills || []);
+        return { ...app, matchScore };
+      });
+
+      enriched.sort((a, b) => b.matchScore - a.matchScore);
+
+      return res.json(enriched);
     }
   } catch (err) {
     res.status(500).json({ error: "Internal server error" });
@@ -79,4 +105,3 @@ exports.updateApplicationStatus = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
