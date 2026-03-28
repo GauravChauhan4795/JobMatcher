@@ -91,26 +91,36 @@ const buildPrompt = (resumeText, jobText) => {
 
 const analyzeResumeText = async (resumeText, jobText) => {
   let analysis = null;
-  const prompt = buildPrompt(resumeText, jobText || "");
-  const responseText = await generateContent(prompt);
+  try {
+    const prompt = buildPrompt(resumeText, jobText || "");
 
-  if (responseText) {
-    const parsed = extractJsonFromText(responseText);
-    if (parsed && typeof parsed === "object") {
-      const skills = normalizeSkillObjects(parsed.skills || []);
-      analysis = {
-        overallScore: clamp(parsed.overallScore ?? 70, 0, 100),
-        skills,
-        strengths: Array.isArray(parsed.strengths) ? parsed.strengths.map(titleCase).slice(0, 6) : [],
-        gaps: Array.isArray(parsed.gaps) ? parsed.gaps.map(titleCase).slice(0, 6) : [],
-        recommendations: Array.isArray(parsed.recommendations)
-          ? parsed.recommendations.slice(0, 3).map((r) => ({
-              icon: String(r.icon || "TIP").slice(0, 6),
-              text: String(r.text || "").trim(),
-            }))
-          : [],
-      };
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+
+    const responseText = await generateContent(prompt, { signal: controller.signal });
+
+    clearTimeout(timeout);
+
+    if (responseText) {
+      const parsed = extractJsonFromText(responseText);
+      if (parsed && typeof parsed === "object") {
+        const skills = normalizeSkillObjects(parsed.skills || []);
+        analysis = {
+          overallScore: clamp(parsed.overallScore ?? 70, 0, 100),
+          skills,
+          strengths: Array.isArray(parsed.strengths) ? parsed.strengths.map(titleCase).slice(0, 6) : [],
+          gaps: Array.isArray(parsed.gaps) ? parsed.gaps.map(titleCase).slice(0, 6) : [],
+          recommendations: Array.isArray(parsed.recommendations)
+            ? parsed.recommendations.slice(0, 3).map((r) => ({
+                icon: String(r.icon || "TIP").slice(0, 6),
+                text: String(r.text || "").trim(),
+              }))
+            : [],
+        };
+      }
     }
+  } catch (err) {
+    console.error("AI analysis failed:", err);
   }
 
   if (!analysis || analysis.skills.length === 0) {

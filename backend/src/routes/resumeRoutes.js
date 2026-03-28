@@ -26,7 +26,7 @@ const handleUpload = (field) => async (req, res, next) => {
   }
 };
 
-router.post("/upload", auth, upload.single("resume"), uploadResume);
-router.post("/upload-analyze", auth, upload.single("resume"), analyzeResume);
+router.post("/upload", auth, handleUpload("resume"), uploadResume);
+router.post("/upload-analyze", optionalAuth, handleUpload("resume"), analyzeResume);
 
 module.exports = router;

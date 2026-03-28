@@ -29,6 +29,7 @@ export default function ResumeAnalysis({ navProps, isLoggedIn, onNavigate }) {
       setStage("upload");
       return;
     }
+    let bumpTimer;
     try {
       setError("");
       setStage("analysing");
@@ -38,10 +39,14 @@ export default function ResumeAnalysis({ navProps, isLoggedIn, onNavigate }) {
       formData.append("resume", file);
       formData.append("jobDescription", jd);
 
+      bumpTimer = setTimeout(() => setProgress(60), 1500);
+
       const res = await API.post("/resume/upload-analyze", formData, {
-        headers: { "Content-Type": "multipart/form-data" }
+        headers: { "Content-Type": "multipart/form-data" },
+        timeout: 45000,
       });
 
+      clearTimeout(bumpTimer);
       setProgress(100);
 
       if (!res.data) {
@@ -53,8 +58,13 @@ export default function ResumeAnalysis({ navProps, isLoggedIn, onNavigate }) {
       setStage("result");
 
     } catch (err) {
+      if (bumpTimer) clearTimeout(bumpTimer);
       console.error("Analysis failed:", err);
-      setError(getApiError(err));
+      if (err?.code === "ECONNABORTED") {
+        setError("Analysis is taking too long. Please try again or use a smaller PDF.");
+      } else {
+        setError(getApiError(err));
+      }
       setProgress(0);
       setStage("jd");
     }
@@ -271,6 +281,9 @@ const S = {
   btnOutline: { background: "transparent", color: "#e0e0f0", padding: "0.9rem 1.5rem", borderRadius: "10px", border: "1px solid rgba(108,92,231,0.3)", cursor: "pointer", fontWeight: 600, fontSize: "0.9rem", fontFamily: "'Space Grotesk',sans-serif" },
   error: { marginTop: "1rem", background: "rgba(253,121,168,0.12)", border: "1px solid rgba(253,121,168,0.35)", color: "#fd79a8", padding: "0.6rem 0.9rem", borderRadius: "8px", fontSize: "0.85rem" },
 };
+
+
+
 
 
 
